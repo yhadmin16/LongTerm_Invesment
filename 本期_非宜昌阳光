@@ -1,0 +1,123 @@
+select distinct gl_balan.pk_group pk_group,
+                gl_balan.pk_accasoa,
+                gl_balan.pk_accountingbook,
+                gl_balan.year yearv,
+                gl_docfree1.F4 docF4,
+                bd_account.code kemucode,
+                bd_accasoa.name kemuname,
+                bcs.name keshangname,
+                sum(gl_balan.debitquantity) debitquantitysum,
+                sum(gl_balan.creditquantity) creditquantitysum,
+                sum(gl_balan.debitamount) BENQI_debitamountsum,
+                sum(gl_balan.creditamount) BENQI_creditamountsum,
+                sum(gl_balan.fracdebitamount) fracdebitamountsum,
+                sum(gl_balan.fraccreditamount) fraccreditamountsum,
+                sum(gl_balan.localdebitamount) localdebitamountsum,
+                sum(gl_balan.localcreditamount) localcreditamountsum,
+                sum(gl_balan.groupdebitamount) groupdebitamountsum,
+                sum(gl_balan.globaldebitamount) globaldebitamountsum,
+                sum(gl_balan.groupcreditamount) groupcreditamountsum,
+                sum(gl_balan.globalcreditamount) globalcreditamountsum
+  from gl_balance gl_balan
+ inner join org_accountingbook oab
+    on gl_balan.pk_accountingbook=oab.pk_accountingbook
+ inner join gl_docfree1
+    on gl_balan.assid = gl_docfree1.assid
+   and gl_docfree1.F4 <> '1001E11000000001NPQH' /*客商为宜昌阳光*/
+ inner join bd_accasoa
+    on gl_balan.pk_accasoa = bd_accasoa.pk_accasoa
+ inner join bd_cust_supplier bcs
+    on gl_docfree1.F4 = bcs.pk_cust_sup
+ inner join bd_account
+    on bd_accasoa.pk_account = bd_account.pk_account
+   and bd_account.code like '1511%'
+ where gl_balan.assid = gl_docfree1.assid
+      /*   and gl_balan.pk_accountingbook = '1001E110000000001QN6'*/
+   and gl_balan.year = tostring(substr(parameter('startdate'),1,4))
+   and gl_balan.adjustperiod >=  tostring(substr(parameter('startdate'),6,7))
+   and gl_balan.adjustperiod <=  tostring(substr(parameter('enddate'),6,7))
+   and gl_balan.voucherkind <> 5
+      /*   and gl_balan.pk_accasoa in
+      ('1001E1100000000014HJ',
+       '1001E1100000000014DH', 
+       '1001E1100000000014HK',
+       '1001E1100000000014HL')*/
+   and gl_docfree1.F4 <> 'NN/A'
+   and 1 = 1
+   and bcs.code in (parameter('kscode'))
+   and oab.code in (parameter('accountingbook'))
+ group by gl_balan.pk_group,
+          gl_balan.pk_accasoa,
+          gl_balan.pk_accountingbook,
+          gl_balan.year,
+          gl_docfree1.F4,
+          bd_accasoa.name,
+          bcs.name,
+          bd_account.code
+/* order by gl_balan.pk_accasoa,
+gl_balan.pk_accountingbook,
+gl_balan.year,
+gl_docfree1.F4*/
+UNION ALL
+select /*+ 0.7497123739884929 */
+ gl_detail.pk_group,
+ gl_detail.pk_accasoa,
+ gl_detail.pk_accountingbook,
+ gl_detail.yearv yearv,
+ gl_docfree1.F4 docF4,
+ bd_account.code kemucode,
+ bd_accasoa.name kemuname,
+ bcs.name keshangname,
+ sum(gl_detail.debitquantity) debitquantitysum,
+ sum(gl_detail.creditquantity) creditquantitysum,
+ sum(gl_detail.debitamount) BENQI_debitamountsum,
+ sum(gl_detail.creditamount) BENQI_creditamountsum,
+ sum(gl_detail.fracdebitamount) fracdebitamountsum,
+ sum(gl_detail.fraccreditamount) fraccreditamountsum,
+ sum(gl_detail.localdebitamount) localdebitamountsum,
+ sum(gl_detail.localcreditamount) localcreditamountsum,
+ sum(gl_detail.groupdebitamount) groupdebitamountsum,
+ sum(gl_detail.globaldebitamount) globaldebitamountsum,
+ sum(gl_detail.groupcreditamount) groupcreditamountsum,
+ sum(gl_detail.globalcreditamount) globalcreditamountsum
+  from gl_detail gl_detail
+ inner join org_accountingbook oab
+    on gl_detail.pk_accountingbook=oab.pk_accountingbook
+ inner join gl_docfree1
+    on gl_detail.assid = gl_docfree1.assid
+   and gl_docfree1.F4 <> '1001E11000000001NPQH' /*客商为宜昌阳光*/
+ inner join bd_accasoa
+    on gl_detail.pk_accasoa = bd_accasoa.pk_accasoa
+ inner join bd_cust_supplier bcs
+    on gl_docfree1.F4 = bcs.pk_cust_sup
+ inner join bd_account
+    on bd_accasoa.pk_account = bd_account.pk_account
+   and bd_account.code like '1511%'
+ where gl_detail.assid = gl_docfree1.assid
+      /*   and gl_detail.pk_accasoa = '1001E1100000000014DH'*/
+   and gl_detail.yearv = tostring(substr(parameter('startdate'),1,4))
+   and gl_detail.adjustperiod >=  tostring(substr(parameter('startdate'),6,7))
+   and gl_detail.adjustperiod <=  tostring(substr(parameter('enddate'),6,7))
+      /*   and gl_detail.pk_accountingbook = '1001E110000000001QN6'*/
+   and gl_detail.discardflagv <> 'Y'
+   and gl_detail.dr = 0
+   and gl_detail.voucherkindv <> 255
+   and gl_detail.tempsaveflag <> 'Y'
+   and gl_detail.pk_managerv = 'N/A'
+   and gl_detail.voucherkindv <> 5
+   and gl_docfree1.F4 <> 'NN/A'
+   and 1 = 1
+   and bcs.code in (parameter('kscode'))
+   and oab.code in (parameter('accountingbook'))
+ group by gl_detail.pk_group,
+          gl_detail.pk_accasoa,
+          gl_detail.pk_accountingbook,
+          gl_detail.yearv,
+          gl_docfree1.F4,
+          bd_accasoa.name,
+          bcs.name,
+          bd_account.code
+/* order by gl_detail.pk_accasoa,
+gl_detail.pk_accountingbook,
+gl_detail.yearv,
+gl_docfree1.F4*/
